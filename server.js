@@ -11,10 +11,16 @@ app.get('/', function(req, res) {
 
 app.get('/search', function(req, res) {
   pg.connect(process.env.DATABASE_URL, function(err, client) {
-    console.log(err);
-    var query = client.query('SELECT * FROM movies WHERE title ILIKE $1 LIMIT 10;', ['%' + req.query.q + '%'], function(err, result) {
-      res.send({'results': result.rows});
-    });
+    if (!err) {
+      var query = client.query('SELECT * FROM movies WHERE title ILIKE $1 LIMIT 10;', ['%' + req.query.q + '%'], function(err, result) {
+        if (err) {
+          res.status(500);
+          console.log(err);
+        } else {
+          res.send({'results': result.rows});
+        }
+      });
+    }
   });
 });
 

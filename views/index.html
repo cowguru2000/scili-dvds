@@ -10,7 +10,8 @@
   <body>
     <img class="bg" src="http://library.brown.edu/about/scili/SciLi-768px.jpg" />
     <div id="content">
-      <input autofill="off" autocomplete="off" id="search" type="text" placeholder="Search for a title or genre..."/>
+      <input autofill="off" autocomplete="off" autofocus="true" id="search" type="text" placeholder="Search for SciLi DVDs by title or genre..."/>
+      <img src="/shuffle.png" id="shuffle" />
     </div>
     <div id="results" class="empty"></div>
 <script type="text/javascript">
@@ -67,6 +68,10 @@ $(document).ready(function() {
     }
   });
   doSearch(''); // initial empty search
+  $('#shuffle').click(function() {
+      $('#search').val('').focus();
+      doSearch('');
+  });
 });
 </script>
 <script id="result-tmpl" type="x-tmpl-mustache">

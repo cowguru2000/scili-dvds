@@ -13,7 +13,19 @@ body, html {
   z-index: -30;
   max-height: 100%;
 }
+#shuffle {
+  cursor: pointer;
+  position: absolute;
+  width: 16px;
+  right: 20px;
+  bottom: 16px;
+  opacity: 0.7;
+}
+#shuffle:hover {
+  opacity: 1.0;
+}
 #content {
+  position: relative;
   width: 500px;
   margin: auto;
   text-align: center;

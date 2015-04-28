@@ -12,7 +12,7 @@
     <div id="content">
       <input autofill="off" autocomplete="off" id="search" type="text" placeholder="Search for a title or genre..."/>
     </div>
-    <div id="results"></div>
+    <div id="results" class="empty"></div>
 <script type="text/javascript">
 $(document).ready(function() {
   var searchTimer;
@@ -23,29 +23,54 @@ $(document).ready(function() {
   var resultDiv = $('#results');
   var tmpl = $('#result-tmpl').html();
   Mustache.parse(tmpl);
-  $('#search').on('keyup', function(ev) {
-    resultDiv.empty();
+  var lastVal = '';
+  var doSearch = function(query) {
     if (searchTimer) {
       clearTimeout(searchTimer);
     }
-    var searchVal = $('#search').val();
+    resultDiv.empty().addClass('empty');
+    $.get('/search', {
+      'q': $('#search').val()
+    }, function(resp) {
+      $.get('/avail', {
+        'callnos': resp.results.map(function(x) { return x.josiah_callno; })
+      }, function(callno_resp) {
+        for (callno in callno_resp) {
+          var avail = callno_resp[callno];
+          var targetRes = $('#' + callno).removeClass('pending');
+          console.log(targetRes, callno);
+          if (!avail) {
+            targetRes.addClass('unavailable');
+            targetRes.find('.available').attr('class', 'available no');
+          } else {
+            targetRes.find('.available').attr('class', 'available yes');
+          }
+        }
+      });
+      resp['results'].forEach(function(elt) {
+        resultDiv.append(Mustache.render(tmpl, elt));
+      });
+      if (resp['results'].length > 0) {
+        resultDiv.removeClass('empty');
+      }
+    });
+  }
+  $('#search').on('keyup', function(ev) {
+    searchVal = $('#search').val();
+    if (ev.ctrlKey || ev.metaKey || ev.altKey || (ev.keyCode >= 37 && ev.keyCode <= 40) || lastVal == searchVal) {
+      return;
+    }
+    resultDiv.empty().addClass('empty');
+    lastVal = searchVal;
     if (searchVal.length >= config.minChars) {
-      searchTimer = setTimeout(function() {
-        resultDiv.empty();
-        $.get('/search', {
-          'q': $('#search').val()
-        }, function(resp) {
-          resp['results'].forEach(function(elt) {
-            resultDiv.append(Mustache.render(tmpl, elt));
-          });
-        });
-      }, config.searchDelay);
+      searchTimer = setTimeout(doSearch.bind(null, searchVal), config.searchDelay);
     }
   });
+  doSearch(''); // initial empty search
 });
 </script>
 <script id="result-tmpl" type="x-tmpl-mustache">
-<div class="result{{^available}} unavailable{{/available}}">
+<div class="result pending" id="{{josiah_callno}}">
   {{#plot_short}}<img src="/posters/{{josiah_callno}}.jpg" class="poster" />{{/plot_short}}
   {{^plot_short}}<div class="poster"></div>{{/plot_short}}
   <h3>{{title}}</h3>
@@ -55,7 +80,7 @@ $(document).ready(function() {
     <li>{{.}}</li>
   {{/genres}}
   </ul>
-  <div class="available {{#available}}yes{{/available}}{{^available}}no{{/available}}"></div>
+  <div class="available pending"></div>
 </div>
 </script>
 <div id="credits">Poster images courtesy of <a href="http://www.imdb.com">IMDB</a>. Background photo via <a href="http://library.brown.edu/about/scili/">Brown University Library</a>.</div>

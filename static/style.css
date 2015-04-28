@@ -1,6 +1,7 @@
-body {
+body, html {
   padding: 0;
   margin: 0;
+  height: 100%;
 }
 .bg {
   width: 100%;
@@ -38,9 +39,14 @@ body {
   background-color: rgba(255, 255, 255, 0.3);
   margin: auto;
   padding: 10px;
-  max-height: 700px;
+  max-height: calc(100% - 100px);
   overflow-y: auto;
   overflow-x: hidden;
+  border-radius: 5px;
+  box-shadow: 0px 0px 5px #fff;
+}
+#results.empty {
+  padding: 0px;
 }
 .result {
   font-family: sans-serif;
@@ -49,10 +55,13 @@ body {
   background-color: rgba(0,0,0,0.1);
   padding: 5px;
   border-radius: 3px;
-  margin-top: 5px;
+  margin-top: 10px;
 }
 .result.unavailable {
   opacity: 0.4;
+}
+.result.pending {
+  opacity: 0.7;
 }
 .result:first-child {
   margin-top: 0px;
@@ -92,6 +101,9 @@ body {
 .available.yes {
   background-color: green;
 }
+.available.pending {
+  background-color: yellow;
+}
 ul.genres {
   list-style-type: none;
   position: absolute;
@@ -121,10 +133,12 @@ ul.genres li {
 }
 #credits {
   position: absolute;
-  bottom: 5px;
+  bottom: 0px;
+  padding: 3px;
   width: 100%;
   text-align: center;
   font-size: 9pt;
+  background-color: rgba(0,0,0,0.2);
 }
 a {
   text-decoration: none;

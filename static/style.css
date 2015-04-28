@@ -65,7 +65,9 @@ body {
   font-weight: normal;
 }
 .result p.plot {
-  font-size: 11pt;
+  font-size: 10pt;
+  margin: 0;
+  margin-bottom: 30px;
 }
 .available {
   position: absolute;

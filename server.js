@@ -20,7 +20,7 @@ pg.connect(process.env.DATABASE_URL, function(err, client) {
 });
 
 app.get('/search', function(req, res) {
-  pg.connect(process.env.DATABASE_URL, function(err, client) {
+  pg.connect(process.env.DATABASE_URL, function(err, client, done) {
     if (err) {
       res.status(500).end();
       console.error(err);
@@ -59,6 +59,7 @@ app.get('/search', function(req, res) {
         }
       });
     }
+    done();
   });
 });
 

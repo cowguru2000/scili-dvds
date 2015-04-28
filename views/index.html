@@ -33,26 +33,28 @@ $(document).ready(function() {
     $.get('/search', {
       'q': $('#search').val()
     }, function(resp) {
-      $.get('/avail', {
-        'callnos': resp.results.map(function(x) { return x.josiah_callno; })
-      }, function(callno_resp) {
-        for (callno in callno_resp) {
-          var avail = callno_resp[callno];
-          var targetRes = $('#' + callno).removeClass('pending');
-          console.log(targetRes, callno);
-          if (!avail) {
-            targetRes.addClass('unavailable');
-            targetRes.find('.available').attr('class', 'available no');
-          } else {
-            targetRes.find('.available').attr('class', 'available yes');
-          }
-        }
-      });
-      resp['results'].forEach(function(elt) {
-        resultDiv.append(Mustache.render(tmpl, elt));
-      });
-      if (resp['results'].length > 0) {
+      if (resp.results) {
+        resp.results.forEach(function(elt) {
+          resultDiv.append(Mustache.render(tmpl, elt));
+        });
         resultDiv.removeClass('empty');
+        $.get('/avail', {
+          'callnos': resp.results.map(function(x) { return x.josiah_callno; })
+        }, function(callno_resp) {
+          for (callno in callno_resp) {
+            var avail = callno_resp[callno];
+            var targetRes = $('#' + callno).removeClass('pending');
+            console.log(targetRes, callno);
+            if (!avail) {
+              targetRes.addClass('unavailable');
+              targetRes.find('.available').attr('class', 'available no');
+            } else {
+              targetRes.find('.available').attr('class', 'available yes');
+            }
+          }
+        });
+      } else {
+        resultDiv.html('<p class="noresult">No Results</p>');
       }
     });
   }

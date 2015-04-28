@@ -4,12 +4,53 @@
     <meta charset="utf-8">
     <title>SciLi Entertainment DVD</title>
     <link rel="stylesheet" href="/style.css">
+    <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/0.8.1/mustache.min.js"></script>
   </head>
   <body>
-    <img src="http://library.brown.edu/about/scili/SciLi-768px.jpg" />
+    <img class="bg" src="http://library.brown.edu/about/scili/SciLi-768px.jpg" />
     <div id="content">
-      <input id="search" type="text" placeholder="Search for a title or genre..."/>
+      <input autofill="off" autocomplete="off" id="search" type="text" placeholder="Search for a title or genre..."/>
     </div>
-    <!-- page content -->
+    <div id="results">
+    </div>
+<script type="text/javascript">
+$(document).ready(function() {
+  var searchTimer;
+  var resultDiv = $('#results');
+  var tmpl = $('#result-tmpl').html();
+  Mustache.parse(tmpl);
+  $('#search').on('keyup', function(ev) {
+    resultDiv.empty();
+    if (searchTimer) {
+      clearTimeout(searchTimer);
+    }
+    searchTimer = setTimeout(function() {
+      resultDiv.empty();
+      $.get('/search', {
+        'q': 'thing'
+      }, function(resp) {
+        resp['results'].forEach(function(elt) {
+          resultDiv.append(Mustache.render(tmpl, elt));
+        });
+      });
+    }, 300);
+  });
+});
+</script>
+<script id="result-tmpl" type="x-tmpl-mustache">
+<div class="result">
+  <img src="http://ia.media-imdb.com/images/M/MV5BMTk5MjM4OTU1OV5BMl5BanBnXkFtZTcwODkzNDIzMw@@._V1_SX300.jpg" />
+  <h3>{{title}}</h3>
+  <p class="plot">{{plot}}</p>
+  <ul class="genres">
+  {{#genres}}
+    <li>{{.}}</li>
+  {{/genres}}
+  </ul>
+  <div class="available {{#available}}yes{{/available}}{{^available}}no{{/available}}"></div>
+</div>
+
+</script>
   </body>
 </html>

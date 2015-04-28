@@ -48,7 +48,7 @@ app.get('/avail', function(req, res) {
           }
         });
         if (avail_cns.length > 0) {
-          client.query('UPDATE movies SET available = true, last_check = \'now\' WHERE josiah_callno IN('+gen_params(avail_cns).join(',')+');', avail_cns, function(err, res) { console.log(err); });
+          client.query('UPDATE movies SET available = true, last_check = \'now\' WHERE josiah_callno IN('+gen_params(avail_cns).join(',')+');', avail_cns, function(err) { err && console.log(err); });
         }
         if (not_avail_cns.length > 0) {
           client.query('UPDATE movies SET available = false, last_check = \'now\' WHERE josiah_callno IN('+gen_params(not_avail_cns).join(',')+');', not_avail_cns, function(err, res) { console.log(err); });
@@ -92,8 +92,18 @@ app.get('/search', function(req, res) {
       res.status(500).end();
       console.error(err);
     } else {
+      var bindings = ['%' + req.query.q + '%'];
+      if (!req.query.q.trim()) {
+        var qstr = 'SELECT * FROM movies WHERE title ILIKE $1 AND rating IS NOT NULL AND available = true AND rating > 80 ORDER BY random() LIMIT 20;';
+      } else {
+        var qstr = 'SELECT movies.* FROM movies WHERE movies.id IN (SELECT movies.id FROM movies ' +
+          'LEFT JOIN movies_genres ON movies_genres.movie_id = movies.id ' +
+          'LEFT JOIN genres ON movies_genres.genre_id = genres.id ' +
+          'WHERE movies.title ILIKE $1 OR LOWER(genres.title) = LOWER($2)) LIMIT 10;';
+        bindings.push(req.query.q);
+      }
       var limit = (req.query.q == '' ? 20 : 10);
-      var query = client.query('SELECT * FROM movies WHERE title ILIKE $1 ' + (req.query.q == '' ? 'AND rating IS NOT NULL AND available = true ORDER BY rating DESC ' : '') + 'LIMIT $2;', ['%' + req.query.q + '%', limit], function(err, result) {
+      var query = client.query(qstr, bindings, function(err, result) {
         if (err) {
           res.status(500).end();
           console.log(err);

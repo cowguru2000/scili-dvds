@@ -28,7 +28,7 @@ $(document).ready(function() {
     searchTimer = setTimeout(function() {
       resultDiv.empty();
       $.get('/search', {
-        'q': 'thing'
+        'q': $('#search').val()
       }, function(resp) {
         resp['results'].forEach(function(elt) {
           resultDiv.append(Mustache.render(tmpl, elt));

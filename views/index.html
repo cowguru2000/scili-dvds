@@ -12,11 +12,14 @@
     <div id="content">
       <input autofill="off" autocomplete="off" id="search" type="text" placeholder="Search for a title or genre..."/>
     </div>
-    <div id="results">
-    </div>
+    <div id="results"></div>
 <script type="text/javascript">
 $(document).ready(function() {
   var searchTimer;
+  var config = {
+    searchDelay: 300,
+    minChars: 2
+  };
   var resultDiv = $('#results');
   var tmpl = $('#result-tmpl').html();
   Mustache.parse(tmpl);
@@ -25,24 +28,28 @@ $(document).ready(function() {
     if (searchTimer) {
       clearTimeout(searchTimer);
     }
-    searchTimer = setTimeout(function() {
-      resultDiv.empty();
-      $.get('/search', {
-        'q': $('#search').val()
-      }, function(resp) {
-        resp['results'].forEach(function(elt) {
-          resultDiv.append(Mustache.render(tmpl, elt));
+    var searchVal = $('#search').val();
+    if (searchVal.length >= config.minChars) {
+      searchTimer = setTimeout(function() {
+        resultDiv.empty();
+        $.get('/search', {
+          'q': $('#search').val()
+        }, function(resp) {
+          resp['results'].forEach(function(elt) {
+            resultDiv.append(Mustache.render(tmpl, elt));
+          });
         });
-      });
-    }, 300);
+      }, config.searchDelay);
+    }
   });
 });
 </script>
 <script id="result-tmpl" type="x-tmpl-mustache">
-<div class="result">
-  <img src="http://ia.media-imdb.com/images/M/MV5BMTk5MjM4OTU1OV5BMl5BanBnXkFtZTcwODkzNDIzMw@@._V1_SX300.jpg" />
+<div class="result{{^available}} unavailable{{/available}}">
+  {{#plot_short}}<img src="/posters/{{josiah_callno}}.jpg" class="poster" />{{/plot_short}}
+  {{^plot_short}}<div class="poster"></div>{{/plot_short}}
   <h3>{{title}}</h3>
-  <p class="plot">{{plot}}</p>
+  <p class="plot">{{plot_short}}</p>
   <ul class="genres">
   {{#genres}}
     <li>{{.}}</li>
@@ -50,7 +57,7 @@ $(document).ready(function() {
   </ul>
   <div class="available {{#available}}yes{{/available}}{{^available}}no{{/available}}"></div>
 </div>
-
 </script>
+<div id="credits">Poster images courtesy of <a href="http://www.imdb.com">IMDB</a>. Background photo via <a href="http://library.brown.edu/about/scili/">Brown University Library</a>.</div>
   </body>
 </html>

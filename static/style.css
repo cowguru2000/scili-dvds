@@ -18,10 +18,11 @@ body {
   text-align: center;
   background-color: rgba(255, 255, 255, 0.3);
   border-radius: 10px;
-  padding: 20px;
-  padding-top: 30px;
+  padding: 10px;
+  padding-top: 20px;
   box-shadow: 0px 0px 5px rgba(255, 255, 255, 0.3);
   margin-top: -10px;
+  margin-bottom: 10px;
 }
 #search {
   width: calc(100% - 20px);
@@ -29,14 +30,14 @@ body {
   border-radius: 4px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   color: #999;
-  font-size: 24px;
-  padding: 10px;
+  font-size: 10pt;
+  padding: 5px;
 }
 #results {
-  width: 600px;
+  width: 500px;
   background-color: rgba(255, 255, 255, 0.3);
   margin: auto;
-  padding: 20px;
+  padding: 10px;
   max-height: 700px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -50,11 +51,16 @@ body {
   border-radius: 3px;
   margin-top: 5px;
 }
+.result.unavailable {
+  opacity: 0.4;
+}
 .result:first-child {
   margin-top: 0px;
 }
-.result img {
+.result .poster {
   width: 80px;
+  max-height: 120px;
+  min-height: 1px;
   float: left;
   margin-right: 8px;
 }
@@ -63,6 +69,9 @@ body {
   text-transform: uppercase;
   margin: 0;
   font-weight: normal;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 .result p.plot {
   font-size: 10pt;
@@ -75,6 +84,7 @@ body {
   right: 0px;
   height: 20px;
   width: 20px;
+  border-radius: 3px;
 }
 .available.no {
   background-color: red;
@@ -108,4 +118,18 @@ ul.genres li {
 .fill {
   background-color: black;
   height: 100%;
+}
+#credits {
+  position: absolute;
+  bottom: 5px;
+  width: 100%;
+  text-align: center;
+  font-size: 9pt;
+}
+a {
+  text-decoration: none;
+  color: blue;
+}
+a:hover {
+  color: #55F;
 }

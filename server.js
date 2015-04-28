@@ -1,7 +1,10 @@
 var express = require('express');
 var path = require('path');
 var pg = require('pg');
+var request = require('request');
 var app = express();
+
+var CACHE_AVAIL_SEC = 60 * 30; // availability cache expires after half hour
 
 app.use(express.static('static'));
 
@@ -11,11 +14,75 @@ app.get('/', function(req, res) {
 
 // load genre map
 var genre_map = {}
-pg.connect(process.env.DATABASE_URL, function(err, client) {
+pg.connect(process.env.DATABASE_URL, function(err, client, done) {
   client.query('SELECT id, title FROM genres;', function(err, res) {
     res.rows.forEach(function(item) {
       genre_map[item['id']] = item['title'];
     });
+    done();
+  });
+});
+
+function gen_params(arr) {
+  return arr.map(function(_, idx) { return '$' + (idx + 1); });
+}
+
+app.get('/avail', function(req, res) {
+  var recursive_avail_check = function(callnos, avail_dict, to_update) {
+    if (callnos.length == 0) {
+      res.send(avail_dict);
+      pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+        if (err) {
+          console.log(err);
+          done();
+          return;
+        }
+        var not_avail_cns = [];
+        var avail_cns = [];
+        to_update.forEach(function(cn) {
+          var stat = avail_dict[cn];
+          if (stat) {
+            avail_cns.push(cn);
+          } else {
+            not_avail_cns.push(cn);
+          }
+        });
+        if (avail_cns.length > 0) {
+          client.query('UPDATE movies SET available = true, last_check = \'now\' WHERE josiah_callno IN('+gen_params(avail_cns).join(',')+');', avail_cns, function(err, res) { console.log(err); });
+        }
+        if (not_avail_cns.length > 0) {
+          client.query('UPDATE movies SET available = false, last_check = \'now\' WHERE josiah_callno IN('+gen_params(not_avail_cns).join(',')+');', not_avail_cns, function(err, res) { console.log(err); });
+        }
+        done();
+      });
+      return;
+    }
+    var first = callnos.pop();
+    if (first in avail_dict) { // if the callno has a cached availability result already
+      recursive_avail_check(callnos, avail_dict, to_update);
+    } else { // the callno does not have a cached availabiity; poll it
+      request('http://josiah.brown.edu/record=' + first, function(err, resp, body) {
+        avail_dict[first] = body.match('AVAILABLE') != null || body.match('RECENTLY RETURNED') != null;
+        to_update.push(first);
+        recursive_avail_check(callnos, avail_dict, to_update);
+      });
+    }
+  }
+  // limit recursion to 40 (slice!)
+  var callnos = req.query.callnos.filter(function(cn) { return !cn.match(/[^A-Za-z0-9]/); }).slice(0, 40);
+  var now = new Date().getTime() / 1000;
+  pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+    var master_dict = {};
+    client.query('SELECT josiah_callno, extract(epoch from last_check) last_ts, available FROM movies WHERE josiah_callno IN(' + gen_params(callnos).join(',') + ');', callnos, function(err, res) {
+      if (err) { console.log(err); return; }
+      res.rows.forEach(function(row) {
+        if (row['last_ts'] > (now - CACHE_AVAIL_SEC)) {
+          master_dict[row['josiah_callno']] = row['available'];
+        }
+      }); 
+    });
+    done();
+    recursive_avail_check(callnos, master_dict, []);
   });
 });
 
@@ -25,19 +92,21 @@ app.get('/search', function(req, res) {
       res.status(500).end();
       console.error(err);
     } else {
-      var query = client.query('SELECT * FROM movies WHERE title ILIKE $1 LIMIT 10;', ['%' + req.query.q + '%'], function(err, result) {
+      var limit = (req.query.q == '' ? 20 : 10);
+      var query = client.query('SELECT * FROM movies WHERE title ILIKE $1 ' + (req.query.q == '' ? 'AND rating IS NOT NULL AND available = true ORDER BY rating DESC ' : '') + 'LIMIT $2;', ['%' + req.query.q + '%', limit], function(err, result) {
         if (err) {
           res.status(500).end();
+          console.log(err);
         } else if (result.rows.length == 0) {
           res.send({});
         } else {
           // load genres
           var movies_to_genres = {};
-          var params = result.rows.map(function(val, idx) { return '$' + (idx + 1); });
           
-          var q2 = client.query('SELECT * FROM movies_genres WHERE movie_id IN('+(params.join(','))+');', result.rows.map(function(x) { return x['id']; }), function(err, res2) {
+          var q2 = client.query('SELECT * FROM movies_genres WHERE movie_id IN('+(gen_params(result.rows).join(','))+');', result.rows.map(function(x) { return x['id']; }), function(err, res2, done2) {
             if (err) {
               console.log(err);
+              done2();
               return;
             }
             res2.rows.forEach(function(pair) {
@@ -48,7 +117,10 @@ app.get('/search', function(req, res) {
             });
           
             // stick genres into movie rows
-            result.rows.forEach(function(row) { row['genres'] = movies_to_genres[row['id']]; });
+            result.rows.forEach(function(row) { 
+              row['genres'] = movies_to_genres[row['id']];
+              delete row.available; // availability is provided in another endpoint
+            });
             if (err) {
               res.status(500).end();
               console.error(err);

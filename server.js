@@ -1,5 +1,6 @@
 var express = require('express');
 var path = require('path');
+var pg = require('pg');
 var app = express();
 
 app.use(express.static('static'));
@@ -9,11 +10,12 @@ app.get('/', function(req, res) {
 });
 
 app.get('/search', function(req, res) {
-  console.log(req.query);
-  res.send({'results': [
-    {'title': 'A Thing', 'rating': 80, 'available': true, 'plot': 'asdf', 'genres': ['Comedy', 'Action', 'Romance']},
-    {'title': 'Not Available', 'rating': 34, 'available': false, 'genres': ['Adventure', 'Thriller']}
-  ]});
+  pg.connect(process.env.DATABASE_URL, function(err, client) {
+    console.log(err);
+    var query = client.query('SELECT * FROM movies WHERE title ILIKE $1 LIMIT 10;', ['%' + req.query.q + '%'], function(err, result) {
+      res.send({'results': result.rows});
+    });
+  });
 });
 
 var server = app.listen(process.env.PORT || 3000, function() {

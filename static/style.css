@@ -1,0 +1,19 @@
+body {
+  padding: 0;
+  margin: 0;
+}
+
+img {
+  width: 100%;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  filter: blur(5px);
+  opacity: 0.5;
+  z-index: -30;
+}
+#content {
+  width: 500px;
+  margin: auto;
+  text-align: center;
+}

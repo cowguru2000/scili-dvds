@@ -51,7 +51,7 @@ app.get('/avail', function(req, res) {
           client.query('UPDATE movies SET available = true, last_check = \'now\' WHERE josiah_callno IN('+gen_params(avail_cns).join(',')+');', avail_cns, function(err) { err && console.log(err); });
         }
         if (not_avail_cns.length > 0) {
-          client.query('UPDATE movies SET available = false, last_check = \'now\' WHERE josiah_callno IN('+gen_params(not_avail_cns).join(',')+');', not_avail_cns, function(err, res) { console.log(err); });
+          client.query('UPDATE movies SET available = false, last_check = \'now\' WHERE josiah_callno IN('+gen_params(not_avail_cns).join(',')+');', not_avail_cns, function(err) { err && console.log(err); });
         }
         done();
       });

@@ -18,6 +18,16 @@
     <div id="results" class="empty"></div>
 <script type="text/javascript">
 $(document).ready(function() {
+  var runtimeStr = function(rt) {
+    var hrs = Math.floor(rt / 60);
+    var mins = rt % 60;
+    var str = '';
+    if (hrs > 0) {
+      str += hrs + 'hr ';
+    }
+    str += mins + 'min';
+    return str;
+  }
   var searchTimer;
   var config = {
     searchDelay: 300,
@@ -43,6 +53,7 @@ $(document).ready(function() {
       resultDiv.empty();
       if (resp.results) {
         resp.results.forEach(function(elt) {
+          elt['runtime'] = runtimeStr(elt['runtime']);
           if (!('available' in elt)) {
             elt['avail_stat'] = 'pending';
             elt['avail_title'] = STR.pending;
@@ -103,7 +114,12 @@ $(document).ready(function() {
   {{^plot_short}}<div class="poster"></div>{{/plot_short}}
   <div class="not-poster">
     <h3>{{title}}</h3>
-    <p class="plot">{{plot_short}}</p>
+    {{#director}}
+    <h4>Director: {{director}}</h4>
+    {{/director}}
+    <p class="plot">{{plot_short}}{{#runtime}}
+      <br /><span class="runtime"><img src="/clock.png" /> {{runtime}}
+    {{/runtime}}</p>
     <ul class="genres">
     {{#genres}}
       <li>{{.}}</li>

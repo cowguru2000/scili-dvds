@@ -105,11 +105,26 @@ body, html {
   overflow: hidden;
   white-space: nowrap;
 }
+.result h4 {
+  font-weight: normal;
+  margin: 0;
+  font-size: 8pt;
+  color: #262626;
+}
 .result p.plot {
   font-size: 10pt;
   margin: 0;
   color: #333;
   margin-bottom: 30px;
+}
+.result .runtime {
+  font-size: 8pt;
+  color: #444;
+}
+.result .runtime img {
+  opacity: 0.5;
+  height: 14px;
+  vertical-align: middle;
 }
 .indicator {
   position: absolute;
@@ -223,5 +238,12 @@ a:hover {
   }
   #credits {
     display: none;
+  }
+  .result .runtime {
+    position: absolute;
+    left: 220px;
+    bottom: 8px;
+    width: 80px;
+    text-align: center;
   }
 }

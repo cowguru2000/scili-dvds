@@ -103,10 +103,10 @@ app.get('/search', function(req, res) {
       if (!req.query.q.trim()) {
         var qstr = 'SELECT * FROM movies WHERE title ILIKE $1 AND rating IS NOT NULL AND available = true AND rating > 80 ORDER BY random() LIMIT 20;';
       } else {
-        var qstr = 'SELECT movies.available, movies.josiah_callno, movies.plot_short, movies.rating, movies.title, movies.id, extract(epoch from last_check) last_ts FROM movies WHERE movies.id IN (SELECT movies.id FROM movies ' +
+        var qstr = 'SELECT movies.runtime, movies.director, movies.available, movies.josiah_callno, movies.plot_short, movies.rating, movies.title, movies.id, extract(epoch from last_check) last_ts FROM movies WHERE movies.id IN (SELECT movies.id FROM movies ' +
           'LEFT JOIN movies_genres ON movies_genres.movie_id = movies.id ' +
           'LEFT JOIN genres ON movies_genres.genre_id = genres.id ' +
-          'WHERE movies.title ILIKE $1 OR LOWER(genres.title) = LOWER($2)) LIMIT 10;';
+          'WHERE movies.title ILIKE $1 OR LOWER(genres.title) = LOWER($2) OR movies.director ILIKE $1) LIMIT 10;';
         bindings.push(req.query.q);
       }
       var limit = (req.query.q == '' ? 20 : 10);

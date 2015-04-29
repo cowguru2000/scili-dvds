@@ -1,11 +1,10 @@
 body, html {
   padding: 0;
   margin: 0;
-  height: 100%;
 }
 .bg {
   width: 100%;
-  position: absolute;
+  position: fixed;
   top: 0px;
   left: 0px;
   filter: blur(5px);
@@ -24,12 +23,19 @@ body, html {
 #shuffle:hover {
   opacity: 1.0;
 }
+#content-wrap {
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  text-align: center;
+}
 #content {
   position: relative;
   width: 500px;
   margin: auto;
   text-align: center;
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(242, 242, 242, 0.8);
   border-radius: 10px;
   padding: 10px;
   padding-top: 20px;
@@ -42,32 +48,30 @@ body, html {
   margin: auto;
   border-radius: 4px;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  color: #999;
+  color: #666;
   font-size: 10pt;
   padding: 5px;
 }
 #results {
   width: 500px;
-  background-color: rgba(255, 255, 255, 0.3);
   margin: auto;
+  margin-top: 60px;
   padding: 10px;
-  max-height: calc(100% - 100px);
-  overflow-y: auto;
-  overflow-x: hidden;
   border-radius: 5px;
-  box-shadow: 0px 0px 5px rgba(255, 255, 255, 0.3);
+  background-color: rgba(0,0,0,0.1);
+  box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
 }
 #results.empty {
   padding: 0px 10px 0px 10px;
 }
 .result {
+  background-color: rgba(255, 255, 255, 0.3);
   font-family: sans-serif;
-  overflow: auto;
   position: relative;
-  background-color: rgba(0,0,0,0.1);
   padding: 5px;
   border-radius: 3px;
   margin-top: 10px;
+  min-height: 120px;
 }
 .result.unavailable {
   opacity: 0.4;
@@ -82,14 +86,15 @@ body, html {
   width: 80px;
   max-height: 120px;
   min-height: 1px;
-  float: left;
   margin-right: 8px;
+  float: left;
 }
 .result h3 {
   font-size: 14pt;
-  text-transform: uppercase;
+  text-transform: capitalize;
   margin: 0;
-  font-weight: normal;
+  color: #222;
+  font-weight: bold;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -97,18 +102,19 @@ body, html {
 .result p.plot {
   font-size: 10pt;
   margin: 0;
+  color: #333;
   margin-bottom: 30px;
 }
 .available {
   position: absolute;
-  bottom: 0px;
-  right: 0px;
+  bottom: 8px;
+  right: 8px;
   height: 20px;
   width: 20px;
   border-radius: 3px;
 }
 .available.no {
-  background-color: red;
+  background-color: #F66;
 }
 .available.yes {
   background-color: green;
@@ -126,11 +132,10 @@ ul.genres {
 }
 ul.genres li {
   display: inline;
-  text-shadow: 1px 1px 0px #333;
   text-transform: uppercase;
   color: white;
-  font-size: 9pt;
-  background-color: #666;
+  font-size: 8pt;
+  background-color: #555;
   padding: 3px;
   border-radius: 3px;
 }
@@ -144,13 +149,15 @@ ul.genres li {
   height: 100%;
 }
 #credits {
-  position: absolute;
-  bottom: 0px;
+  position: fixed;
+  left: 0px;
+  top: 0px;
   padding: 3px;
-  width: 100%;
+  width: calc(50% - 280px);
   text-align: center;
-  font-size: 9pt;
-  background-color: rgba(0,0,0,0.2);
+  font-size: 8pt;
+  background-color: rgba(0,0,0,0.1);
+  z-index: 1001;
 }
 a {
   text-decoration: none;
@@ -163,5 +170,6 @@ a:hover {
   text-align: center;
   font-family: sans-serif;
   color: #999;
+  padding: 15px;
   text-transform: uppercase;
 }

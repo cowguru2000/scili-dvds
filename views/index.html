@@ -9,9 +9,11 @@
   </head>
   <body>
     <img class="bg" src="http://library.brown.edu/about/scili/SciLi-768px.jpg" />
-    <div id="content">
-      <input autofill="off" autocomplete="off" autofocus="true" id="search" type="text" placeholder="Search for SciLi DVDs by title or genre..."/>
-      <img src="/shuffle.png" id="shuffle" title="Show Random" />
+    <div id="content-wrap">
+      <div id="content">
+        <input autofill="off" autocomplete="off" autofocus="true" id="search" type="text" placeholder="Search for SciLi DVDs by title or genre..."/>
+        <img src="/shuffle.png" id="shuffle" title="Show Random" />
+      </div>
     </div>
     <div id="results" class="empty"></div>
 <script type="text/javascript">
@@ -81,13 +83,15 @@ $(document).ready(function() {
 <div class="result pending" id="{{josiah_callno}}">
   {{#plot_short}}<img src="/posters/{{josiah_callno}}.jpg" class="poster" />{{/plot_short}}
   {{^plot_short}}<div class="poster"></div>{{/plot_short}}
-  <h3>{{title}}</h3>
-  <p class="plot">{{plot_short}}</p>
-  <ul class="genres">
-  {{#genres}}
-    <li>{{.}}</li>
-  {{/genres}}
-  </ul>
+  <div class="not-poster">
+    <h3>{{title}}</h3>
+    <p class="plot">{{plot_short}}</p>
+    <ul class="genres">
+    {{#genres}}
+      <li>{{.}}</li>
+    {{/genres}}
+    </ul>
+  </div>
   <div class="available pending" title='Checking availability...'></div>
 </div>
 </script>

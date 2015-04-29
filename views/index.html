@@ -24,8 +24,8 @@ $(document).ready(function() {
     minChars: 2
   };
   var STR = {
-    unavail: 'Unavailable',
-    avail: 'Available now',
+    unavailable: 'Unavailable',
+    available: 'Available now',
     pending: 'Checking availability...'
   };
   var resultDiv = $('#results');
@@ -43,7 +43,6 @@ $(document).ready(function() {
       resultDiv.empty();
       if (resp.results) {
         resp.results.forEach(function(elt) {
-          elt['pending'] = ('available' in elt);
           if (!('available' in elt)) {
             elt['avail_stat'] = 'pending';
             elt['avail_title'] = STR.pending;

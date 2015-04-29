@@ -28,7 +28,7 @@ function gen_params(arr) {
 }
 
 app.get('/avail', function(req, res) {
-  if (typeof req.query.callnos != 'array') {
+  if (!req.query.callnos || !req.query.callnos.length) {
     res.send({});
     return;
   }

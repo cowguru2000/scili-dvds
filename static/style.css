@@ -193,3 +193,35 @@ a:hover {
   padding: 15px;
   text-transform: uppercase;
 }
+
+@media screen and (max-device-width: 640px) {
+  body, #credits {
+    width: 100%;
+  }
+  #content {
+    width: auto;
+  }
+  #results {
+    width: calc(100% - 20px);
+  }
+  .result p.plot {
+    margin-bottom: 2px;
+    font-size: 80%;
+  }
+  ul.genres {
+    position: relative;
+    left: 0px;
+    bottom: auto;
+    margin-bottom: 7px;
+  }
+  .meter {
+    position: relative;
+    bottom: auto;
+  }
+  .bg {
+    height: 100%;
+  }
+  #credits {
+    display: none;
+  }
+}

@@ -104,17 +104,17 @@ $(document).ready(function() {
   <div class="not-poster">
     <h3>{{title}}</h3>
     <p class="plot">{{plot_short}}</p>
+    <ul class="genres">
+    {{#genres}}
+      <li>{{.}}</li>
+    {{/genres}}
+    </ul>
     {{#rating}}
     <div class="meter" title="Critic score from Rotten Tomatoes">
       <div class="fill" style="width: {{rating}}%;" title="Critic score from Rotten Tomatoes"></div>
       <div class="rating" title="Critic score from Rotten Tomatoes">Score: {{rating}}%</div>
     </div>
     {{/rating}}
-    <ul class="genres">
-    {{#genres}}
-      <li>{{.}}</li>
-    {{/genres}}
-    </ul>
   </div>
   <div class="indicator" title='{{avail_title}}'></div>
 </div>

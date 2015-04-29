@@ -48,10 +48,10 @@ app.get('/avail', function(req, res) {
           }
         });
         if (avail_cns.length > 0) {
-          client.query('UPDATE movies SET available = true, last_check = \'now\' WHERE josiah_callno IN('+gen_params(avail_cns).join(',')+');', avail_cns, function(err) { err && console.log(err); });
+          client.query('UPDATE movies SET available = true, last_check = \'now\' WHERE josiah_callno IN('+gen_params(avail_cns).join(',')+');', avail_cns, function(err) { err && console.log('cache_avail', err); });
         }
         if (not_avail_cns.length > 0) {
-          client.query('UPDATE movies SET available = false, last_check = \'now\' WHERE josiah_callno IN('+gen_params(not_avail_cns).join(',')+');', not_avail_cns, function(err) { err && console.log(err); });
+          client.query('UPDATE movies SET available = false, last_check = \'now\' WHERE josiah_callno IN('+gen_params(not_avail_cns).join(',')+');', not_avail_cns, function(err) { err && console.log('cache_unavail', err); });
         }
         done();
       });
@@ -70,20 +70,22 @@ app.get('/avail', function(req, res) {
   }
   // limit recursion to 40 (slice!)
   var callnos = req.query.callnos.filter(function(cn) { return !cn.match(/[^A-Za-z0-9]/); }).slice(0, 40);
-  var now = new Date().getTime() / 1000;
-  pg.connect(process.env.DATABASE_URL, function(err, client, done) {
-    var master_dict = {};
-    client.query('SELECT josiah_callno, extract(epoch from last_check) last_ts, available FROM movies WHERE josiah_callno IN(' + gen_params(callnos).join(',') + ');', callnos, function(err, res) {
-      if (err) { console.log(err); return; }
-      res.rows.forEach(function(row) {
-        if (row['last_ts'] > (now - CACHE_AVAIL_SEC)) {
-          master_dict[row['josiah_callno']] = row['available'];
-        }
-      }); 
+  if (callnos.length > 0) {
+    var now = new Date().getTime() / 1000;
+    pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+      var master_dict = {};
+      client.query('SELECT josiah_callno, extract(epoch from last_check) last_ts, available FROM movies WHERE josiah_callno IN(' + gen_params(callnos).join(',') + ');', callnos, function(err, res) {
+        if (err) { console.log('avail', callnos, err); return; }
+        res.rows.forEach(function(row) {
+          if (row['last_ts'] > (now - CACHE_AVAIL_SEC)) {
+            master_dict[row['josiah_callno']] = row['available'];
+          }
+        }); 
+      });
+      done();
+      recursive_avail_check(callnos.slice(), master_dict, []);
     });
-    done();
-    recursive_avail_check(callnos, master_dict, []);
-  });
+  }
 });
 
 app.get('/search', function(req, res) {
@@ -106,7 +108,7 @@ app.get('/search', function(req, res) {
       var query = client.query(qstr, bindings, function(err, result) {
         if (err) {
           res.status(500).end();
-          console.log(err);
+          console.log('query', err);
         } else if (result.rows.length == 0) {
           res.send({});
         } else {
@@ -115,7 +117,7 @@ app.get('/search', function(req, res) {
           
           var q2 = client.query('SELECT * FROM movies_genres WHERE movie_id IN('+(gen_params(result.rows).join(','))+');', result.rows.map(function(x) { return x['id']; }), function(err, res2, done2) {
             if (err) {
-              console.log(err);
+              console.log('q2', err);
               done2();
               return;
             }

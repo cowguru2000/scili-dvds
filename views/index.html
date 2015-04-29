@@ -33,6 +33,7 @@ $(document).ready(function() {
     $.get('/search', {
       'q': $('#search').val()
     }, function(resp) {
+      resultDiv.empty();
       if (resp.results) {
         resp.results.forEach(function(elt) {
           resultDiv.append(Mustache.render(tmpl, elt));

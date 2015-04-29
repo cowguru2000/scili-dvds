@@ -28,6 +28,10 @@ function gen_params(arr) {
 }
 
 app.get('/avail', function(req, res) {
+  if (typeof req.query.callnos != 'array') {
+    res.send({});
+    return;
+  }
   var recursive_avail_check = function(callnos, avail_dict, to_update) {
     if (callnos.length == 0) {
       res.send(avail_dict);

@@ -23,6 +23,11 @@ $(document).ready(function() {
     searchDelay: 300,
     minChars: 2
   };
+  var STR = {
+    unavail: 'Unavailable',
+    avail: 'Available now',
+    pending: 'Checking availability...'
+  };
   var resultDiv = $('#results');
   var tmpl = $('#result-tmpl').html();
   Mustache.parse(tmpl);
@@ -38,24 +43,38 @@ $(document).ready(function() {
       resultDiv.empty();
       if (resp.results) {
         resp.results.forEach(function(elt) {
+          elt['pending'] = ('available' in elt);
+          if (!('available' in elt)) {
+            elt['avail_stat'] = 'pending';
+            elt['avail_title'] = STR.pending;
+          } else if (elt['available']) {
+            elt['avail_stat'] = 'yes';
+            elt['avail_title'] = STR.available;
+          } else {
+            elt['avail_stat'] = 'no';
+            elt['avail_title'] = STR.unavailable;
+          }
+
           resultDiv.append(Mustache.render(tmpl, elt));
         });
+        var needed_callnos = resp.results.filter(function(x) { return !('available' in x); }).map(function(x) { return x.josiah_callno; });
         resultDiv.removeClass('empty');
-        $.get('/avail', {
-          'callnos': resp.results.map(function(x) { return x.josiah_callno; })
-        }, function(callno_resp) {
-          for (callno in callno_resp) {
-            var avail = callno_resp[callno];
-            var targetRes = $('#' + callno).removeClass('pending');
-            console.log(targetRes, callno);
-            if (!avail) {
-              targetRes.addClass('unavailable');
-              targetRes.find('.available').attr('class', 'available no').attr('title', 'Unavailable');
-            } else {
-              targetRes.find('.available').attr('class', 'available yes').attr('title', 'Available Now');
+        if (needed_callnos.length > 0) {
+          $.get('/avail', {
+            'callnos': needed_callnos
+          }, function(callno_resp) {
+            for (callno in callno_resp) {
+              var avail = callno_resp[callno];
+              var targetRes = $('#' + callno).removeClass('pending');
+              if (!avail) {
+                targetRes.addClass('no')
+                  .find('.indicator').attr('title', STR.unavailable);
+              } else {
+                targetRes.addClass('yes').find('.indicator').attr('title', STR.available);
+              }
             }
-          }
-        });
+          });
+        }
       } else {
         resultDiv.html('<p class="noresult">No Results</p>');
       }
@@ -80,7 +99,7 @@ $(document).ready(function() {
 });
 </script>
 <script id="result-tmpl" type="x-tmpl-mustache">
-<div class="result pending{{^plot_short}} lame{{/plot_short}}" id="{{josiah_callno}}">
+<div class="result {{avail_stat}}{{^plot_short}} lame{{/plot_short}}" id="{{josiah_callno}}">
   {{#plot_short}}<img src="/posters/{{josiah_callno}}.jpg" class="poster" />{{/plot_short}}
   {{^plot_short}}<div class="poster"></div>{{/plot_short}}
   <div class="not-poster">
@@ -98,7 +117,7 @@ $(document).ready(function() {
     {{/genres}}
     </ul>
   </div>
-  <div class="available pending" title='Checking availability...'></div>
+  <div class="indicator" title='{{avail_title}}'></div>
 </div>
 </script>
 <div id="credits">By <a href="http://josephstein.me">Joe Stein</a>. Poster images via <a href="http://www.imdb.com">IMDB</a>. Background photo via <a href="http://library.brown.edu/about/scili/">Brown University Library</a>. Design help courtesy of <a href="http://javierasandoval.github.io/">Javier Sandoval</a>.</div>

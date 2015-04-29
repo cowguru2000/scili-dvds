@@ -76,7 +76,7 @@ body, html {
 .result.lame {
   min-height: 0px;
 }
-.result.unavailable {
+.result.no {
   opacity: 0.4;
 }
 .result.pending {
@@ -111,22 +111,20 @@ body, html {
   color: #333;
   margin-bottom: 30px;
 }
-.available {
+.indicator {
   position: absolute;
   bottom: 8px;
   right: 8px;
   height: 20px;
   width: 20px;
   border-radius: 3px;
+  background-color: yellow;
 }
-.available.no {
+.result.no .indicator {
   background-color: #A33;
 }
-.available.yes {
+.result.yes .indicator {
   background-color: #3A3;
-}
-.available.pending {
-  background-color: yellow;
 }
 ul.genres {
   list-style-type: none;

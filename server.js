@@ -89,6 +89,7 @@ app.get('/avail', function(req, res) {
 });
 
 app.get('/search', function(req, res) {
+  var now = new Date().getTime() / 1000;
   pg.connect(process.env.DATABASE_URL, function(err, client, done) {
     if (err) {
       res.status(500).end();
@@ -98,7 +99,7 @@ app.get('/search', function(req, res) {
       if (!req.query.q.trim()) {
         var qstr = 'SELECT * FROM movies WHERE title ILIKE $1 AND rating IS NOT NULL AND available = true AND rating > 80 ORDER BY random() LIMIT 20;';
       } else {
-        var qstr = 'SELECT movies.* FROM movies WHERE movies.id IN (SELECT movies.id FROM movies ' +
+        var qstr = 'SELECT movies.available, movies.josiah_callno, movies.plot_short, movies.rating, movies.title, movies.id, extract(epoch from last_check) last_ts FROM movies WHERE movies.id IN (SELECT movies.id FROM movies ' +
           'LEFT JOIN movies_genres ON movies_genres.movie_id = movies.id ' +
           'LEFT JOIN genres ON movies_genres.genre_id = genres.id ' +
           'WHERE movies.title ILIKE $1 OR LOWER(genres.title) = LOWER($2)) LIMIT 10;';
@@ -131,7 +132,9 @@ app.get('/search', function(req, res) {
             // stick genres into movie rows
             result.rows.forEach(function(row) { 
               row['genres'] = movies_to_genres[row['id']];
-              delete row.available; // availability is provided in another endpoint
+              if (now > row.last_ts + CACHE_AVAIL_SEC) {
+                delete row.available; // cached avail. invalid, availability is provided in another endpoint
+              }
             });
             if (err) {
               res.status(500).end();

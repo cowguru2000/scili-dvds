@@ -209,7 +209,7 @@ a:hover {
   text-transform: uppercase;
 }
 
-@media screen and (max-device-width: 640px), @media screen and (max-width: 640px) {
+@media screen and (max-device-width: 640px), @media screen and (max-width: 640px), @media screen and (-webkit-device-pixel-ratio: 3) {
   body, #credits {
     width: 100%;
   }

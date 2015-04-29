@@ -73,6 +73,9 @@ body, html {
   margin-top: 10px;
   min-height: 120px;
 }
+.result.lame {
+  min-height: 0px;
+}
 .result.unavailable {
   opacity: 0.4;
 }
@@ -88,6 +91,9 @@ body, html {
   min-height: 1px;
   margin-right: 8px;
   float: left;
+}
+.result .not-poster {
+  padding-left: 88px;
 }
 .result h3 {
   font-size: 14pt;
@@ -114,10 +120,10 @@ body, html {
   border-radius: 3px;
 }
 .available.no {
-  background-color: #F66;
+  background-color: #A33;
 }
 .available.yes {
-  background-color: green;
+  background-color: #3A3;
 }
 .available.pending {
   background-color: yellow;
@@ -126,11 +132,12 @@ ul.genres {
   list-style-type: none;
   position: absolute;
   bottom: 10px;
-  left: 93px;
+  left: 202px;
   margin: 0;
   padding: 0;
 }
 ul.genres li {
+  cursor: default;
   display: inline;
   text-transform: uppercase;
   color: white;
@@ -140,13 +147,28 @@ ul.genres li {
   border-radius: 3px;
 }
 .meter {
-  border: 1px solid #333;
-  height: 15px;
+  border: 1px solid #3B2747;
+  background-color: #A970CF;
+  border-radius: 3px;
+  height: 17px;
   width: 100px;
+  position: absolute;
+  bottom: 8px;
 }
 .fill {
-  background-color: black;
+  background-color: #563A69;
   height: 100%;
+}
+.rating {
+  cursor: default;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  color: white;
+  font-size: 9pt;
 }
 #credits {
   position: fixed;

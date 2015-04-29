@@ -80,12 +80,18 @@ $(document).ready(function() {
 });
 </script>
 <script id="result-tmpl" type="x-tmpl-mustache">
-<div class="result pending" id="{{josiah_callno}}">
+<div class="result pending{{^plot_short}} lame{{/plot_short}}" id="{{josiah_callno}}">
   {{#plot_short}}<img src="/posters/{{josiah_callno}}.jpg" class="poster" />{{/plot_short}}
   {{^plot_short}}<div class="poster"></div>{{/plot_short}}
   <div class="not-poster">
     <h3>{{title}}</h3>
     <p class="plot">{{plot_short}}</p>
+    {{#rating}}
+    <div class="meter" title="Critic score from Rotten Tomatoes">
+      <div class="fill" style="width: {{rating}}%;" title="Critic score from Rotten Tomatoes"></div>
+      <div class="rating" title="Critic score from Rotten Tomatoes">Score: {{rating}}%</div>
+    </div>
+    {{/rating}}
     <ul class="genres">
     {{#genres}}
       <li>{{.}}</li>

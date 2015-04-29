@@ -210,7 +210,7 @@ a:hover {
 }
 
 @media screen and (max-device-width: 640px), @media screen and (max-width: 640px), @media screen and (-webkit-device-pixel-ratio: 3) {
-  body, #credits {
+  body, html, #credits, #content-wrap {
     max-width: 640px;
   }
   #content {

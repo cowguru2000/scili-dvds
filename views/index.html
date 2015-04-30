@@ -121,9 +121,11 @@ $(document).ready(function() {
     {{#director}}
     <h4>Director: {{director}}</h4>
     {{/director}}
-    <p class="plot">{{plot_short}}{{#runtime}}
-      <br /><span class="runtime"><img src="/clock.png" /> {{runtime}}
-    {{/runtime}}</p>
+    <p class="plot">{{plot_short}}
+    {{#runtime}}
+    <div class="runtime"><img src="/clock.png" /> {{runtime}}</div>
+    {{/runtime}}
+    </p>
     <ul class="genres">
     {{#genres}}
       <li>{{.}}</li>

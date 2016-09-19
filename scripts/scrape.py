@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import argparse
 import os
-import psycopg2
+import psycopg2, psycopg2.extras
 import requests
 import re
 import sys
@@ -70,7 +70,7 @@ def main():
             print(msg)
 
     conn = psycopg2.connect(database=args.pdb, user=args.puser, password=args.ppass, host=args.phost, port=args.pport)
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     # prepare select statement
     cur.execute(
         "prepare sel_movie as "
@@ -97,6 +97,19 @@ def main():
         tmdb_data['images']['base_url'] + 'w300' + "%s"
     )
 
+    # get TMDB genres, develop mapping between theirs and ours
+    tmdb_genre_to_id = {}
+    tmdb_id_to_ours = {}
+    genre_data = t.request('/genre/movie/list').json()['genres']
+    for genre in genre_data:
+        tmdb_genre_to_id[genre['name']] = genre['id']
+
+    # now get our genres
+    cur.execute("SELECT id, title FROM genres;")
+    for row in cur:
+        if row[1] in tmdb_genre_to_id:
+            tmdb_id_to_ours[tmdb_genre_to_id[row[1]]] = row[0]
+
     markup = requests.get(CATALOG_URL).text
     soup = BeautifulSoup(markup, "lxml")
 
@@ -118,9 +131,12 @@ def main():
 
         # see if we already have a record for this movie
         cur.execute("EXECUTE sel_movie (%s)", [callno])
+        existing = cur.rowcount
         poster_filepath = args.static_path + '/%s.jpg' % callno
-        if cur.rowcount == 0 or not os.path.isfile(poster_filepath):
+
+        if existing == 0 or not os.path.isfile(poster_filepath):
             # hit TMDB for movie info
+            our_genre_ids = []
             try:
                 tmdb_data = t.request('/search/movie',
                         {'query': title}).json()
@@ -131,6 +147,9 @@ def main():
                 if tmdb_data['total_results'] == 0:
                     print("No results found for \"%s\"" % title)
                     continue
+                
+                ok_genres = filter(lambda g: g in tmdb_id_to_ours, tmdb_data['results'][0]['genre_ids'])
+                our_genre_ids = map(lambda g: tmdb_id_to_ours[g], ok_genres)
             except Exception as e:
                 print("Couldn't get search results for %s" % title)
                 print(e)
@@ -170,8 +189,15 @@ def main():
                 qstr = ("INSERT INTO movies "
                     '(' + ','.join(map(lambda x: x[0], pairs)) + ')'
                     ' VALUES '
-                    '(' + ','.join(["%s"] * len(pairs)) + ')')
+                    '(' + ','.join(["%s"] * len(pairs)) + ') RETURNING id')
                 cur.execute(qstr, map(lambda x: x[1], pairs))
+
+                # insert genres into join table
+                new_id = cur.fetchone()[0]
+                tuples = [[new_id, g] for g in our_genre_ids]
+                cur.executemany("INSERT INTO movies_genres (movie_id, genre_id) VALUES (%s, %s)", tuples)
+
+                
 
         else:  # cur.rowcount != 0 and we already have poster
             v("Already have entry and poster for movie %s" % title)

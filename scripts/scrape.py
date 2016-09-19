@@ -9,7 +9,6 @@ import time
 
 CATALOG_URL = "http://library.brown.edu/collatoz/videos.php?task=loc&location=Friedman"
 TMDB_URL = "http://api.themoviedb.org/3"
-#TMDB_URL = "http://private-anon-b3a2c031c4-themoviedb.apiary-mock.com/3"
 TMDB_RATE_LIMIT = 40 # requests per...
 TMDB_LIMIT_WINDOW = 10 # seconds
 
@@ -53,7 +52,6 @@ def main():
     # we need the API key from the command line
     parser = argparse.ArgumentParser()
     parser.add_argument('api_key', type=str, help='Your TMDB API key')
-    parser.add_argument('postgresql_url', type=str, help='PostgreSQL URI (e.g. postgresql://user:pass@host/database)')
     parser.add_argument('--static-path', type=str, default='static/posters/')
     parser.add_argument('--pdb', type=str, default='scilidvd', help='PostgreSQL database name')
     parser.add_argument('--puser', type=str, default='scilidvd', help='PostgreSQL user')

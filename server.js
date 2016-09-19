@@ -1,3 +1,4 @@
+// vim: set ts=2 sw=2 sts=2:
 var express = require('express');
 var path = require('path');
 var pg = require('pg');
@@ -15,6 +16,10 @@ app.get('/', function(req, res) {
 // load genre map
 var genre_map = {}
 pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+  if (err) {
+    console.log(err);
+    process.exit(1);
+  }
   client.query('SELECT id, title FROM genres;', function(err, res) {
     res.rows.forEach(function(item) {
       genre_map[item['id']] = item['title'];

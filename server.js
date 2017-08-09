@@ -1,38 +1,30 @@
 // vim: set ts=2 sw=2 sts=2:
 var express = require('express');
 var path = require('path');
-const { Client } = require('pg');
+const { Pool } = require('pg');
 var request = require('request');
 var app = express();
+app.use(express.static('static'));
 
-const client = new Client({
-  connectionString: process.env.DATABASE_URL 
-});
 const CACHE_AVAIL_SEC = 60 * 30; // availability cache expires after half hour
 
-app.use(express.static('static'));
+/* Limit the number of callnos whose availability to retrieve from Josiah
+ * in one go. Since the avail search is recursive, this limits not only
+ * max time spent, but also prevents stack overflow. */
+const MAX_AVAIL_CHECKS = 40;
+
+/* Set up PG connection pool */
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
+});
+pool.on('error', (err, client) => {
+  console.error('error on idle PG client in pool', err)
+  process.exit(-1)
+})
 
 app.get('/', function(req, res) {
   res.sendFile(path.join(__dirname, './views', 'index.html'));
 });
-
-console.log('Preloading data...');
-
-/* Open a persistent connection */
-client.connect()
-  .catch(err => console.error("connection error", err.stack))
-
-/* Load a map of genre IDs to genre titles. This is useful for translating
- * genre IDs to text without having to poll the DB. */
-var genre_map = {}
-client.query('SELECT id, title FROM genres;')
-  .then(res => res.rows.forEach(item => {
-    genre_map[item['id']] = item['title'];
-  }))
-  .then(() => {
-    console.log('Genre map loaded.')
-  })
-  .catch(e => console.error(e.stack))
 
 function gen_params(arr) {
   return arr.map(function(_, idx) { return '$' + (idx + 1); })
@@ -66,11 +58,11 @@ app.get('/avail', function(req, res) {
       })
 
       if (avail_cns.length > 0) {
-        client.query('UPDATE movies SET available = true, last_check = \'now\' WHERE josiah_callno IN('+gen_params(avail_cns).join(',')+');', avail_cns)
+        pool.query('UPDATE movies SET available = true, last_check = \'now\' WHERE josiah_callno IN('+gen_params(avail_cns).join(',')+');', avail_cns)
          .catch(err => console.log('cache_avail', err))
       }
       if (not_avail_cns.length > 0) {
-        client.query('UPDATE movies SET available = false, last_check = \'now\' WHERE josiah_callno IN('+gen_params(not_avail_cns).join(',')+');', not_avail_cns)
+        pool.query('UPDATE movies SET available = false, last_check = \'now\' WHERE josiah_callno IN('+gen_params(not_avail_cns).join(',')+');', not_avail_cns)
          .catch(err => console.log('cache_unavail', err));
       }
       return
@@ -90,25 +82,35 @@ app.get('/avail', function(req, res) {
     }
   }
 
-  // limit recursion to 40 (slice!)
+  // limit recursion to MAX_AVAIL_CHECKS (slice!)
   var callnos = req.query.callnos
     .filter(cn => !cn.match(/[^A-Za-z0-9]/))
-    .slice(0, 40)
+    .slice(0, MAX_AVAIL_CHECKS)
   
   if (callnos.length > 0) {
     var now = new Date().getTime() / 1000;
     var avail_map = {}
-    client.query('SELECT josiah_callno, extract(epoch from last_check) last_ts, available FROM movies WHERE josiah_callno IN(' + gen_params(callnos).join(',') + ');', callnos)
-      .then(res => {
-        res.rows.forEach(function(row) {
-          /* If the cached data for an item isn't expired, use that */
-          if (row['last_ts'] > (now - CACHE_AVAIL_SEC)) {
-            avail_map[row['josiah_callno']] = row['available']
-          }
-        })
-        recursive_avail_check(callnos.slice(), avail_map, [])
+    pool.connect()
+      .then(client => {
+        client.query('SELECT josiah_callno, extract(epoch from last_check) last_ts, available FROM movies WHERE josiah_callno IN(' + gen_params(callnos).join(',') + ');', callnos)
+          .then(res => {
+            /* release the client back to the pool - we're going to be doing
+             * possibly many availability checks now which could take a while */
+            client.release()
+
+            res.rows.forEach(function(row) {
+              /* If the cached data for an item isn't expired, use that */
+              if (row['last_ts'] > (now - CACHE_AVAIL_SEC)) {
+                avail_map[row['josiah_callno']] = row['available']
+              }
+            })
+            recursive_avail_check(callnos.slice(), avail_map, [])
+          })
+          .catch(e => {
+            client.release()
+            console.error(e.stack)
+          })
       })
-      .catch(e => console.error(e.stack))
   }
 });
 
@@ -125,7 +127,7 @@ app.get('/search', function(req, res) {
     bindings.push(req.query.q);
   }
   var limit = (req.query.q == '' ? 20 : 10);
-  client.query(qstr, bindings)
+  pool.query(qstr, bindings)
     .then(result => {
       if (result.rows.length == 0) {
         res.send({})
@@ -135,7 +137,7 @@ app.get('/search', function(req, res) {
       // Load the genres of the requested movies
       var movies_to_genres = {};
       
-      client.query('SELECT * FROM movies_genres WHERE movie_id IN('+(gen_params(result.rows).join(','))+');', result.rows.map(function(x) { return x['id']; }))
+      pool.query('SELECT * FROM movies_genres WHERE movie_id IN('+(gen_params(result.rows).join(','))+');', result.rows.map(function(x) { return x['id']; }))
         .then(res2 => {
           res2.rows.forEach(pair => {
             if (!(pair['movie_id'] in movies_to_genres)) {
@@ -162,7 +164,22 @@ app.get('/search', function(req, res) {
     })
 })
 
-var server = app.listen(process.env.PORT || 3000, function() {
-  var addr = server.address();
-  console.log("Listening at %s:%s", addr.address, addr.port);
-});
+
+console.log('Setting up...')
+
+/* Load a map of genre IDs to genre titles. This is useful for translating
+ * genre IDs to text without having to poll the DB. */
+console.log('Loading genre map...')
+var genre_map = {}
+pool.query('SELECT id, title FROM genres;')
+  .then(res => res.rows.forEach(item => {
+    genre_map[item['id']] = item['title'];
+  }))
+  .then(() => {
+    console.log('Genre map loaded.')
+    var server = app.listen(process.env.PORT || 3000, () => {
+      var addr = server.address();
+      console.log("Listening at %s:%s", addr.address, addr.port);
+    })
+  })
+  .catch(e => console.error(e.stack))

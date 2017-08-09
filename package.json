@@ -9,7 +9,11 @@
     "request": "latest"
   },
   "engines": {
-    "node": "0.12.2"
+    "node": "6.11.x"
   },
-  "license": "GPLv3"
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jas14/scili-dvds"
+  }
 }

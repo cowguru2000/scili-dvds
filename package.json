@@ -4,8 +4,8 @@
   "description": "Check the SciLi DVDs!",
   "main": "server.js",
   "dependencies": {
-    "express": "~4.12.x",
-    "pg": "4.x",
+    "express": "4.x",
+    "pg": "7.x",
     "request": "latest"
   },
   "engines": {
